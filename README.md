@@ -112,7 +112,7 @@ THEMIS provides 3 separate modes for testing and evaluation.
    npm run dev
    ```
 
-3. Open your browser to `http://localhost:3000/review` and click **Run Interactive Vulnerability Demo**.
+3. Open your browser to `http://localhost:3000/tribunal` and click **Run Interactive Vulnerability Demo**.
    - The workflow diagram updates step-by-step: Triage -> Security / Style -> Verifier -> Fix Generator.
    - Click **Approve 2 Generated Patches** to trigger live automated PR creation and view the generated GitHub PR link badge.
 

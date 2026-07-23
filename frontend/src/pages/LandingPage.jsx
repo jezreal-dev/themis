@@ -1,33 +1,53 @@
 import { useNavigate } from 'react-router-dom'
+import {
+  Shield,
+  ShieldCheck,
+  Cpu,
+  GitBranch,
+  Database,
+  Lock,
+  Activity,
+  Terminal,
+  BarChart3,
+  Layers,
+  CheckCircle2,
+  Sparkles
+} from 'lucide-react'
 
 const FEATURES = [
   {
-    icon: '🛡️',
+    icon: Layers,
+    accent: '#a855f7',
     title: '5-Agent Parallel Tribunal',
     desc: 'Specialized node execution for triage, static security analysis, style validation, confidence verification, and patch generation.'
   },
   {
-    icon: '🧠',
-    title: 'Grounded RAG Engine',
-    desc: 'BGE-M3 dense embeddings and vector search cross-reference findings directly against verified OWASP and CWE databases.'
+    icon: Database,
+    accent: '#00f0ff',
+    title: 'Grounded Vector RAG',
+    desc: 'Dense embeddings and Qdrant vector search cross-reference findings directly against verified OWASP and CWE databases.'
   },
   {
-    icon: '⚡',
-    title: 'AMD Radeon W7900D',
-    desc: 'Qwen2.5-Coder-32B INT4 AWQ inference hosted on 48GB VRAM with ROCm 7.2 optimization.'
+    icon: Cpu,
+    accent: '#ff2d55',
+    title: 'AMD Hardware Acceleration',
+    desc: 'Qwen2.5-Coder-32B INT4 AWQ inference hosted on 48GB VRAM with ROCm 7.2.1 optimization.'
   },
   {
-    icon: '🔒',
+    icon: Lock,
+    accent: '#ffd60a',
     title: 'Human Approval Gate',
     desc: 'Automated patch generation requires human verification before opening pull requests.'
   },
   {
-    icon: '📦',
+    icon: ShieldCheck,
+    accent: '#30d158',
     title: 'Isolated Execution',
     desc: 'Static analysis tools run in ephemeral containers with restricted system permissions and zero network egress.'
   },
   {
-    icon: '📊',
+    icon: Activity,
+    accent: '#ff6b35',
     title: 'Hardware Telemetry',
     desc: 'Real-time throughput metrics, latency timing, and time-to-first-token benchmarks.'
   }
@@ -43,9 +63,9 @@ export default function LandingPage() {
         display: 'inline-flex',
         alignItems: 'center',
         gap: 8,
-        padding: '6px 14px',
+        padding: '6px 16px',
         background: 'rgba(232, 0, 61, 0.1)',
-        border: '1px solid rgba(232, 0, 61, 0.25)',
+        border: '1px solid rgba(232, 0, 61, 0.3)',
         borderRadius: 999,
         fontSize: '0.78rem',
         fontWeight: 700,
@@ -54,7 +74,8 @@ export default function LandingPage() {
         textTransform: 'uppercase',
         marginBottom: 24
       }}>
-        ⚡ AMD AI DevMaster Hackathon 2026 : Team Alchemy
+        <Sparkles size={14} />
+        <span>AMD AI DevMaster Hackathon 2026 : Team Alchemy</span>
       </div>
 
       {/* Main Title */}
@@ -71,17 +92,19 @@ export default function LandingPage() {
       </h1>
 
       {/* Subtitle */}
-      <p className="page-subtitle" style={{ margin: '0 auto 36px', fontSize: '1.05rem', maxWidth: 640 }}>
+      <p className="page-subtitle" style={{ margin: '0 auto 36px', fontSize: '1.05rem', maxWidth: 680 }}>
         THEMIS deploys five specialized AI agents to inspect pull requests, identify vulnerabilities, verify CWE compliance, and generate validated fixes on AMD Radeon hardware.
       </p>
 
       {/* Action Buttons */}
       <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 64 }}>
-        <button className="btn btn-primary btn-lg" onClick={() => navigate('/review')}>
-          ⚖️ Launch Tribunal
+        <button className="btn btn-primary btn-lg" onClick={() => navigate('/tribunal')}>
+          <Shield size={18} />
+          <span>Launch Tribunal Console</span>
         </button>
         <button className="btn btn-secondary btn-lg" onClick={() => navigate('/benchmark')}>
-          📊 View Benchmarks
+          <BarChart3 size={18} />
+          <span>View Telemetry Benchmarks</span>
         </button>
       </div>
 
@@ -115,20 +138,25 @@ export default function LandingPage() {
         margin: '0 auto 64px',
         textAlign: 'left'
       }}>
-        {FEATURES.map(f => (
-          <div key={f.title} className="card card-interactive">
-            <div style={{ fontSize: '1.75rem', marginBottom: 12 }}>{f.icon}</div>
-            <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: 6 }}>{f.title}</div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{f.desc}</div>
-          </div>
-        ))}
+        {FEATURES.map(f => {
+          const IconComponent = f.icon
+          return (
+            <div key={f.title} className="card card-interactive">
+              <div style={{ color: f.accent, marginBottom: 14 }}>
+                <IconComponent size={28} />
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: 6 }}>{f.title}</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{f.desc}</div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Agent Workflow */}
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <div className="section-label" style={{ marginBottom: 16 }}>Agent Pipeline Architecture</div>
         <div className="pipeline-container" style={{ justifyContent: 'center' }}>
-          {['Triage', '→', 'Security', 'Style', '→', 'Verifier', '→', 'Fix Generator', '→', 'Human Approval'].map((step, i) => (
+          {['Triage Engine', '→', 'Security RAG', 'Style Engine', '→', 'Verifier Gate', '→', 'Fix Generator', '→', 'Human Approval'].map((step, i) => (
             step === '→' ? (
               <span key={i} className="pipeline-arrow">→</span>
             ) : (

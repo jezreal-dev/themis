@@ -1,24 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap');
 
-/* ── Design Tokens ───────────────────────────────────────────── */
+/* ── Cyber Command Center Tokens ────────────────────────────── */
 :root {
-  /* Brand & Core Palette */
+  /* Brand Palette */
   --amd-red: #e8003d;
-  --amd-red-dark: #a00028;
-  --amd-red-glow: rgba(232, 0, 61, 0.25);
+  --amd-red-dark: #900028;
+  --amd-red-glow: rgba(232, 0, 61, 0.35);
   
-  /* Cyber Dark Theme */
-  --bg-void: #06070a;
-  --bg-deep: #0b0c10;
-  --bg-surface: #101217;
-  --bg-elevated: #161821;
-  --bg-card: rgba(18, 20, 29, 0.7);
-  --bg-card-hover: rgba(26, 30, 43, 0.85);
+  --cyan-accent: #00f0ff;
+  --cyan-glow: rgba(0, 240, 255, 0.25);
 
-  /* Glass & Borders */
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-hover: rgba(232, 0, 61, 0.4);
-  --glass-strong: rgba(255, 255, 255, 0.12);
+  /* Deep Cyber Palette */
+  --bg-void: #05070a;
+  --bg-deep: #0a0d14;
+  --bg-surface: #0e121c;
+  --bg-elevated: #141a26;
+  --bg-card: rgba(14, 18, 28, 0.75);
+  --bg-card-hover: rgba(22, 28, 42, 0.9);
+
+  /* Glassmorphism & Borders */
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-border-hover: rgba(0, 240, 255, 0.4);
+  --glass-border-active: rgba(232, 0, 61, 0.5);
+  --glass-strong: rgba(255, 255, 255, 0.15);
 
   /* Typography */
   --text-primary: #f3f4f6;
@@ -30,12 +34,12 @@
   --severity-high: #ff6b35;
   --severity-medium: #ffd60a;
   --severity-low: #30d158;
-  --severity-info: #64d2ff;
+  --severity-info: #00f0ff;
 
-  /* Agent Colors */
-  --agent-triage: #bf5af2;
-  --agent-security: #ff453a;
-  --agent-style: #64d2ff;
+  /* Agent Node Colors */
+  --agent-triage: #a855f7;
+  --agent-security: #ff2d55;
+  --agent-style: #00f0ff;
   --agent-verifier: #ffd60a;
   --agent-fix: #30d158;
 
@@ -47,6 +51,7 @@
 
   --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 350ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Base Reset ──────────────────────────────────────────────── */
@@ -77,9 +82,9 @@ body::before {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(232, 0, 61, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(232, 0, 61, 0.025) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(0, 240, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.018) 1px, transparent 1px);
+  background-size: 36px 36px;
   pointer-events: none;
   z-index: 0;
 }
@@ -88,17 +93,30 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0),
-    rgba(255,255,255,0) 50%,
-    rgba(0, 0, 0, 0.2) 50%,
-    rgba(0, 0, 0, 0.2)
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(232, 0, 61, 0.08) 0%,
+    rgba(0, 240, 255, 0.03) 45%,
+    transparent 70%
   );
-  background-size: 100% 4px;
   pointer-events: none;
-  opacity: 0.3;
   z-index: 0;
+}
+
+/* ── Custom Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-void);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--amd-red);
 }
 
 /* ── Typography & Code ───────────────────────────────────────── */
@@ -121,7 +139,7 @@ code, pre, .font-mono {
   display: flex;
   align-items: center;
   padding: 0 24px;
-  background: rgba(6, 7, 10, 0.85);
+  background: rgba(5, 7, 10, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--glass-border);
@@ -148,14 +166,14 @@ code, pre, .font-mono {
 }
 
 .navbar-brand .logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: linear-gradient(135deg, var(--amd-red), #900028);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  color: #ffffff;
   box-shadow: 0 0 16px var(--amd-red-glow);
 }
 
@@ -166,6 +184,9 @@ code, pre, .font-mono {
 }
 
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
   text-decoration: none;
@@ -180,16 +201,33 @@ code, pre, .font-mono {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.nav-link.active {
+  border-bottom: 2px solid var(--amd-red);
+}
+
 .nav-badge {
   background: rgba(232, 0, 61, 0.15);
   color: var(--amd-red);
   border: 1px solid rgba(232, 0, 61, 0.3);
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 4px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.status-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: #30d158;
+  padding: 4px 10px;
+  background: rgba(48, 209, 88, 0.1);
+  border: 1px solid rgba(48, 209, 88, 0.25);
+  border-radius: 4px;
 }
 
 /* ── Container Layout ────────────────────────────────────────── */
@@ -218,7 +256,7 @@ code, pre, .font-mono {
   max-width: 680px;
 }
 
-/* ── Cards & Surfaces ────────────────────────────────────────── */
+/* ── Cards & Glass Surfaces ───────────────────────────────────── */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--glass-border);
@@ -231,14 +269,18 @@ code, pre, .font-mono {
 }
 
 .card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.card-interactive {
+  cursor: pointer;
 }
 
 .card-interactive:hover {
   border-color: var(--glass-border-hover);
   background: var(--bg-card-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 20px var(--cyan-glow);
 }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
@@ -267,7 +309,7 @@ code, pre, .font-mono {
 
 .btn-primary:hover {
   background: #ff0c49;
-  box-shadow: 0 0 30px rgba(232, 0, 61, 0.4);
+  box-shadow: 0 0 30px rgba(232, 0, 61, 0.45);
   transform: translateY(-1px);
 }
 
@@ -331,8 +373,8 @@ code, pre, .font-mono {
 }
 
 .input:focus {
-  border-color: var(--amd-red);
-  box-shadow: 0 0 0 3px var(--amd-red-glow);
+  border-color: var(--cyan-accent);
+  box-shadow: 0 0 0 3px var(--cyan-glow);
 }
 
 .input::placeholder {
@@ -378,9 +420,9 @@ code, pre, .font-mono {
 }
 
 .badge-tag {
-  background: rgba(100, 210, 255, 0.1);
+  background: rgba(0, 240, 255, 0.1);
   color: var(--severity-info);
-  border: 1px solid rgba(100, 210, 255, 0.25);
+  border: 1px solid rgba(0, 240, 255, 0.25);
 }
 
 /* ── Dynamic Motion Graphics: Radar Sweep & Agent Status ────── */
@@ -405,7 +447,7 @@ code, pre, .font-mono {
 
 .agent-card.active {
   border-color: var(--agent-accent, var(--amd-red));
-  background: rgba(22, 24, 33, 0.9);
+  background: rgba(20, 26, 38, 0.95);
   box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
 }
 
@@ -517,7 +559,7 @@ code, pre, .font-mono {
 }
 
 .finding-card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.16);
   background: var(--bg-card-hover);
 }
 
@@ -705,6 +747,7 @@ code, pre, .font-mono {
   border: 1px solid var(--glass-border);
   transition: all var(--transition-base);
   min-width: 140px;
+  cursor: pointer;
 }
 
 .pipeline-step.active {
@@ -719,7 +762,13 @@ code, pre, .font-mono {
 }
 
 .step-badge {
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .step-info {
@@ -762,4 +811,34 @@ code, pre, .font-mono {
   font-size: 1.1rem;
   font-weight: 700;
   user-select: none;
+}
+
+/* ── Modal Dialog for Node Inspector ─────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-content {
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border-hover);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  max-width: 580px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
