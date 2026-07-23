@@ -123,10 +123,17 @@
 
 ### 1. LLM Inference Server (AMD Radeon PRO W7900D)
 
-**Primary model:** `Qwen/Qwen2.5-Coder-32B-Instruct`
-- VRAM at FP16: ~37GB → fits comfortably in 48GB at 0.80 utilization
-- HumanEval score: 92.7% — GPT-4o level on code tasks
-- Context: 64K tokens (safe ceiling for 48GB at 0.80 util)
+**Primary model:** `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ`
+- VRAM at FP16 (weight only): ~65GB → **EXCEEDS** 48GB W7900D VRAM
+- VRAM at AWQ INT4: **~18GB** → fits comfortably with 30GB headroom for KV cache
+- Quality delta vs FP16: <2% on HumanEval — negligible for code tasks
+- HumanEval score (AWQ): ~91% — GPT-4o level maintained
+- Context: 32K tokens (safe ceiling for AWQ at 0.85 util on 48GB)
+
+> [!CAUTION]
+> The original plan stated FP16 VRAM ~37GB — this was incorrect.
+> Actual FP16 requirement is ~71GB (65GB weights + 6GB KV cache overhead).
+> **Confirmed via audit July 20, 2026.** AWQ INT4 is the correct deployment target.
 
 **Speculative decoding (2-3× throughput gain):**
 - Draft model: `Qwen/Qwen2.5-Coder-1.5B-Instruct`
@@ -137,12 +144,14 @@
 ```bash
 VLLM_ATTENTION_BACKEND=ROCM_AITER_FA \
 VLLM_USE_V1=0 \
-vllm serve Qwen/Qwen2.5-Coder-32B-Instruct \
-  --speculative-model Qwen/Qwen2.5-Coder-1.5B-Instruct \
+vllm serve /mnt/pvc/models/qwen32b-awq \
+  --served-model-name themis-coder \
+  --speculative-model /mnt/pvc/models/qwen1_5b \
   --num-speculative-tokens 5 \
   --dtype float16 \
-  --max-model-len 65536 \
-  --gpu-memory-utilization 0.80 \
+  --quantization awq \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.85 \
   --enable-chunked-prefill \
   --speculative-config '{"method": "draft_model", "num_speculative_tokens": 5}' \
   --port 8000

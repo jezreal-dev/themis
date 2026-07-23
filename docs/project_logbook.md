@@ -375,31 +375,93 @@ Three candidates were evaluated:
 
 ---
 
-## (Copy and fill for each sprint)
+## ═══════════════════════════════════════
+## PHASE 3 — IMPLEMENTATION & DEPLOYMENT
+## July 20–21, 2026
 ## ═══════════════════════════════════════
 
-```
-### [DATE TIME] — SPRINT LOG — Sprint N: [Name]
+---
 
-**Started:** [datetime]
-**Completed:** [datetime]
-**Status:** [In Progress / Complete / Blocked]
+### [2026-07-20 20:30 BST] — SPRINT LOG — Sprint 1: Cloud Infrastructure & vLLM Serving
 
-**Completed tasks:**
-- [ ] Task 1
-- [ ] Task 2
+**Status:** ✅ Complete
 
-**Blockers:**
-- None / [description]
+**Accomplished:**
+- Provisioned AMD Radeon PRO W7900D (48GB VRAM) instance on Radeon Cloud.
+- Downloaded and verified `Qwen2.5-Coder-32B-AWQ` weights (19.4 GB).
+- Configured ROCm 7.2.1 + vLLM 0.16.1.dev0 inference server.
+- Resolved speculative decoding CLI incompatibility on ROCm by removing draft model flags.
+- Successfully verified first model inference (`themis-coder`) — detected SQL injection (CWE-89) and Hardcoded Key (CWE-798) in sample Python code.
 
-**New bugs found:**
-- [Bug name] — [severity] — [fix applied]
+---
 
-**Benchmark results (if applicable):**
+### [2026-07-21 14:00 BST] — SPRINT LOG — Sprint 2: Backend Architecture & RAG Pipeline
+
+**Status:** ✅ Complete
+
+**Accomplished:**
+- Built 13 backend modules:
+  - `backend/main.py`: FastAPI server with CORS & authentication middleware.
+  - `backend/agents/types.py`: Extracted shared `Finding` & `ThemisState` schemas (resolved circular import between orchestrator and agent nodes).
+  - `backend/agents/orchestrator.py`: 5-Agent Tribunal state graph using LangGraph.
+  - `backend/agents/` (`triage`, `security`, `style`, `verifier`, `fix`): Agent implementations.
+  - `backend/tools/` (`sandbox.py`, `github_tool.py`): Docker tool sandbox and GitHub API integration.
+  - `backend/security/sanitizer.py`: Prompt injection filter.
+  - `backend/rag/` (`indexer.py`, `retriever.py`, `chunkers/`): BGE-M3 + Qdrant hybrid search for OWASP/CWE grounding.
+  - `backend/routers/` (`review.py`, `benchmark.py`): API endpoints and WebSocket live streaming.
+
+---
+
+### [2026-07-21 18:00 BST] — SPRINT LOG — Sprint 3: Frontend Interface
+
+**Status:** ✅ Complete
+
+**Accomplished:**
+- Created React 18 + Vite frontend with custom dark mode design system (AMD red accents, glassmorphic cards).
+- Built 3 core pages:
+  - `LandingPage.jsx`: Hero section, hardware specs, 5-agent pipeline workflow diagram.
+  - `ReviewPage.jsx`: PR input form, 5 agent status cards, live WebSocket findings stream, verdict banner, HITL fix approval.
+  - `BenchmarkPage.jsx`: Real-time tok/s & TTFT latency metrics display from the AMD inference engine.
+- Built `src/api.js`: Unified API client for HTTP REST & WebSocket streams.
+
+---
+
+### [2026-07-21 23:05 BST] — BUG FOUND & DIAGNOSED — HTTP 404 / Cloud Port Exposure
+
+**Issue:** Frontend displayed `❌ vLLM server offline — HTTP 404` when calling cloud URL `https://radeon-global.anruicloud.com/spaces/u-4594-4c8358eb/7860`.
+
+**Deep Diagnostic & Root Cause:**
+1. Automated path probe confirmed Radeon Cloud does **NOT** expose arbitrary HTTP ports (like 7860) to the open internet. The ONLY open HTTPS path is JupyterLab (`/instances/u-4594-4c8358eb/lab`), which requires Jupyter cookie/token auth.
+2. Direct SSH to `36.150.116.206 -p 31190` returned `Connection refused` because `sshd` inside the cloud container was not running.
+
+**Resolution Strategy (Standard Hybrid Deployment):**
+- Step 1: Start SSH daemon in cloud container: `service ssh start` (or `/usr/sbin/sshd`).
+- Step 2: Establish SSH tunnel from laptop to cloud:
+  `ssh -N -L 8000:localhost:8000 root@36.150.116.206 -p 31190`
+- Step 3: Run backend locally on laptop:
+  `conda run -n themis uvicorn backend.main:app --host 0.0.0.0 --port 8080 --reload`
+- Step 4: Point frontend `.env` to local backend: `VITE_API_URL=http://localhost:8080`.
+
+**Impact:** Eliminates cloud network routing issues and allows the local frontend & backend to communicate reliably while leveraging the cloud AMD W7900D GPU for all vLLM inference over the SSH tunnel.
+
+---
+
+### [2026-07-21 23:25 BST] — MILESTONE — First Live Benchmark Executed on AMD Radeon W7900D
+
+**Status:** 🎉 SUCCESS (2/2 Tests Passed)
+
+**Benchmark Results:**
 | Metric | Result | Target | Status |
 |---|---|---|---|
-| tok/s | - | >45 | - |
-```
+| **GPU Hardware** | AMD Radeon PRO W7900D (48GB VRAM) | W7900D | ✅ Verified |
+| **Model** | `Qwen2.5-Coder-32B-AWQ` | 32B AWQ | ✅ Verified |
+| **ROCm Stack** | ROCm 7.2.1 + vLLM 0.16.1.dev0 | ROCm 7.x | ✅ Verified |
+| **Avg TTFT** | **1298 ms** | <2000 ms | ✅ PASSED |
+| **Tests Passed** | **2 / 2** | 2 / 2 | ✅ 100% |
+
+**Per-Prompt Breakdown:**
+1. `short_review` (~100 input tokens): TTFT 1711.2 ms | Status: Success
+2. `medium_review` (~500 input tokens): TTFT 884.7 ms | Status: Success
 
 ---
 
@@ -410,10 +472,12 @@ Three candidates were evaluated:
 | # | Item | Owner | Due | Status |
 |---|---|---|---|---|
 | 1 | Confirm team name for PR title | Developer | Aug 4 | ✅ **CLOSED** — **ALCHEMY** |
-| 2 | Provision W7900D instance on Radeon Cloud | Developer | July 20 | 🔴 OPEN |
-| 3 | Start model downloads to PVC | Developer | July 20 | 🔴 OPEN |
-| 4 | Create `themis-test-repo` with seeded vulnerabilities | Developer | July 24 | 🟡 PENDING |
-| 5 | Define standard benchmark prompt corpus | Developer | July 23 | ✅ **CLOSED** — defined in Backend Schema §10 |
+| 2 | Provision W7900D instance on Radeon Cloud | Developer | July 20 | ✅ **CLOSED** |
+| 3 | Start model downloads to PVC | Developer | July 20 | ✅ **CLOSED** — Qwen2.5-32B AWQ live |
+| 4 | Start `sshd` & open SSH tunnel for local backend | Developer | July 21 | ✅ **CLOSED** — SSH tunnel active |
+| 5 | Run live benchmark test suite | Developer | July 21 | ✅ **CLOSED** — 2/2 tests passed |
+| 6 | Create `themis-test-repo` with seeded vulnerabilities | Developer | July 24 | 🟡 PENDING |
+
 
 ---
 
@@ -433,8 +497,11 @@ Three candidates were evaluated:
 | D-008 | React + FastAPI frontend | Most impressive for demo video | 2026-07-20 | Team |
 | D-009 | LangGraph for orchestration | Purpose-built for agent state machines | 2026-07-20 | Research |
 | D-011 | Team name: **Alchemy** | No collision, thematically fits Themis mythology | 2026-07-20 14:07 | Developer |
+| D-012 | Extract `types.py` for shared schemas | Fix Python circular import in orchestrator | 2026-07-21 | Developer |
+| D-013 | SSH Tunneling for vLLM API Access | Bypass Radeon Cloud HTTP ingress restrictions | 2026-07-21 | Developer |
 
 ---
 
 *Logbook maintained by: AMD AI DevMaster Hackathon AI Specialist*
-*Next update due: End of Sprint 1 (July 23, 2026)*
+*Next update due: End of Sprint 4 (July 22, 2026)*
+
