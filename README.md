@@ -14,6 +14,7 @@
 [![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Qdrant](https://img.shields.io/badge/Qdrant-Vector_RAG-DC2626?style=for-the-badge&logo=qdrant&logoColor=white)](https://qdrant.tech/)
 [![Semgrep](https://img.shields.io/badge/Semgrep-SAST_Rules-00D2FF?style=for-the-badge&logo=semgrep&logoColor=black)](https://semgrep.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 </div>
 
