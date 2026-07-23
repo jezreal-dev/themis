@@ -22,8 +22,8 @@ frontend/dist/
 frontend/build/
 .npm/
 
-# IDE & OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
+# Output Exports & Test Reports
+*.sarif
+themis_report_*.json
+themis_sarif_*.sarif
+

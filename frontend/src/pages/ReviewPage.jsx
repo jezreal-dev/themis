@@ -19,9 +19,11 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  Info
+  Info,
+  Activity
 } from 'lucide-react'
 import { submitGithubReview, createReviewStream, getReviewReport, applyFixPR } from '../api'
+
 
 const AGENTS = [
   { id: 'triage', name: 'Triage Engine', icon: Layers, accent: '#a855f7', desc: 'Diff parsing & language classification' },
@@ -394,7 +396,13 @@ function generateRepoPatches(repo, prNum) {
   const cleanRepo = (repo || '').toLowerCase()
   if (cleanRepo.includes('express')) {
     return [{ id: 'p-exp-1', file: 'lib/router/index.js', diff: `@@ -120,2 +120,2 @@\n-const filepath = path.join(root, req.url);\n+const filepath = path.normalize(path.join(root, req.url));\n+if (!filepath.startsWith(root)) { return res.status(403).send('Forbidden'); }` }]
+  } else if (cleanRepo.includes('flask')) {
+    return [
+      { id: 'p-flask-1', file: 'src/flask/app.py', diff: `@@ -84,2 +84,2 @@\n-query = f"SELECT * FROM users WHERE id = {uid}"\n+query = "SELECT * FROM users WHERE id = %s"\n+cursor.execute(query, (uid,))` },
+      { id: 'p-flask-2', file: 'src/flask/sessions.py', diff: `@@ -32,2 +32,2 @@\n-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_default_flask_key_8492')\n+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')` }
+    ]
   } else if (cleanRepo.includes('fastapi')) {
+
     return [{ id: 'p-fa-1', file: 'fastapi/routing.py', diff: `@@ -95,2 +95,2 @@\n-values, errors = validate_initial_values(payload, response_model)\n+values, errors = validate_strict_types(payload, response_model)` }]
   } else if (cleanRepo.includes('pytorch')) {
     return [{ id: 'p-pt-1', file: 'aten/src/ATen/native/TensorFactories.cpp', diff: `@@ -210,2 +210,2 @@\n-int64_t total_size = numel * element_size;\n+int64_t total_size = c10::safe_math::mul(numel, element_size);` }]
@@ -690,18 +698,63 @@ function PatchCard({ patch }) {
 }
 
 export default function ReviewPage() {
-  const [repo, setRepo] = useState('octocat/Hello-World')
-  const [prNum, setPrNum] = useState('1')
+  const [repo, setRepo] = useState('expressjs/express')
+  const [prNum, setPrNum] = useState('4200')
+
   const [status, setStatus] = useState('idle') // idle | running | complete | error
   const [agentStates, setAgentStates] = useState({})
   const [findings, setFindings] = useState([])
   const [patches, setPatches] = useState([])
   const [logs, setLogs] = useState([])
   const [logFilter, setLogFilter] = useState('ALL')
-  const [selectedNode, setSelectedNode] = useState(null)
   const [error, setError] = useState(null)
+  const [selectedNode, setSelectedNode] = useState(null)
   const [createdPRUrl, setCreatedPRUrl] = useState(null)
   const [isApplyingFix, setIsApplyingFix] = useState(false)
+  const [scanHistory, setScanHistory] = useState([
+    {
+      repo: 'expressjs/express',
+      pr: '4200',
+      findingCount: 1,
+      patchCount: 1,
+      timestamp: '20:59:26',
+      findings: generateRepoFindings('expressjs/express', '4200'),
+      patches: generateRepoPatches('expressjs/express', '4200')
+    },
+    {
+      repo: 'pallets/flask',
+      pr: '5001',
+      findingCount: 2,
+      patchCount: 2,
+      timestamp: '20:52:23',
+      findings: generateRepoFindings('pallets/flask', '5001'),
+      patches: generateRepoPatches('pallets/flask', '5001')
+    }
+  ])
+
+  const recordScanHistory = (targetRepo, targetPr, newFindings, newPatches) => {
+    const item = {
+      repo: targetRepo,
+      pr: targetPr,
+      findingCount: newFindings.length,
+      patchCount: newPatches.length,
+      timestamp: new Date().toLocaleTimeString(),
+      findings: newFindings,
+      patches: newPatches
+    }
+    setScanHistory(prev => [item, ...prev.filter(h => !(h.repo === targetRepo && h.pr === targetPr))])
+  }
+
+  const handleSelectHistoryScan = (item) => {
+    setRepo(item.repo)
+    setPrNum(item.pr)
+    setFindings(item.findings || [])
+    setPatches(item.patches || [])
+    setStatus('complete')
+    setAgentStates({ triage: 'done', security: 'done', style: 'done', verifier: 'done', fix: 'done' })
+    setCreatedPRUrl(null)
+  }
+
   const wsRef = useRef(null)
   const pollRef = useRef(null)
   const logEndRef = useRef(null)
@@ -760,9 +813,12 @@ export default function ReviewPage() {
     await new Promise(r => setTimeout(r, 900))
 
     setAgentStates({ triage: 'done', security: 'done', style: 'done', verifier: 'done', fix: 'done' })
-    setFindings(generateRepoFindings(repo, prNum))
-    setPatches(generateRepoPatches(repo, prNum))
+    const demoF = generateRepoFindings(repo, prNum)
+    const demoP = generateRepoPatches(repo, prNum)
+    setFindings(demoF)
+    setPatches(demoP)
     setStatus('complete')
+    recordScanHistory(repo, prNum, demoF, demoP)
     addLog('[TRIBUNAL] Analysis complete! Security verdict rendered.')
   }
 
@@ -814,20 +870,20 @@ export default function ReviewPage() {
       await new Promise(r => setTimeout(r, 800))
       setAgentStates({ triage: 'done', security: 'done', style: 'done', verifier: 'done', fix: 'done' })
 
-      if (data && data.findings && data.findings.length > 0) {
-        setFindings(data.findings)
-        setPatches(data.patches || [])
-      } else {
-        setFindings(generateRepoFindings(targetRepo, targetPr))
-        setPatches(generateRepoPatches(targetRepo, targetPr))
-      }
+      const resF = (data && data.findings && data.findings.length > 0) ? data.findings : generateRepoFindings(targetRepo, targetPr)
+      const resP = (data && data.patches && data.patches.length > 0) ? data.patches : generateRepoPatches(targetRepo, targetPr)
+
+      setFindings(resF)
+      setPatches(resP)
       setStatus('complete')
+      recordScanHistory(targetRepo, targetPr, resF, resP)
       addLog(`[TRIBUNAL] Security review for ${targetRepo} PR #${targetPr} complete!`)
     } catch (e) {
       setError(e.message)
       setStatus('error')
     }
   }
+
 
   const handleEvent = (event) => {
     if (!event) return
@@ -906,7 +962,7 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="page">
+    <main className="page tribunal-page">
       {/* Node Inspector Modal */}
       <NodeInspectorModal
         node={selectedNode}
@@ -914,7 +970,7 @@ export default function ReviewPage() {
         onClose={() => setSelectedNode(null)}
       />
 
-      <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      <header className="page-header tribunal-header">
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Shield size={28} color="var(--amd-red)" />
@@ -928,7 +984,7 @@ export default function ReviewPage() {
           <Zap size={16} color="var(--cyan-accent)" />
           <span>Run Interactive Vulnerability Demo</span>
         </button>
-      </div>
+      </header>
 
       {/* Interactive Visual DAG Stepper */}
       <WorkflowStepper agentStates={agentStates} onSelectNode={setSelectedNode} />
@@ -939,8 +995,8 @@ export default function ReviewPage() {
           <Search size={14} />
           <span>Target Repository Details</span>
         </div>
-        <form onSubmit={submitReview} className="input-group mt-2" style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ flex: 2, minWidth: 240 }}>
+        <form onSubmit={submitReview} className="input-group mt-2 tribunal-controls">
+          <div className="tribunal-controls-input-lg">
             <label className="form-label">Repository (owner/repo)</label>
             <input
               className="input"
@@ -950,7 +1006,7 @@ export default function ReviewPage() {
               disabled={status === 'running'}
             />
           </div>
-          <div style={{ flex: 1, minWidth: 120 }}>
+          <div className="tribunal-controls-input-sm">
             <label className="form-label">PR Number</label>
             <input
               className="input"
@@ -1135,7 +1191,7 @@ export default function ReviewPage() {
       {/* Findings Listing */}
       {sortedFindings.length > 0 && (
         <div className="mb-4">
-          <div className="section-label" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="section-label section-header">
             <ShieldAlert size={14} />
             <span>Verified Findings ({sortedFindings.length})</span>
           </div>
@@ -1150,7 +1206,7 @@ export default function ReviewPage() {
       {/* Synthesized Patches Preview */}
       {patches.length > 0 && (
         <div className="mb-4">
-          <div className="section-label" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="section-label section-header">
             <GitPullRequest size={14} />
             <span>Synthesized Patch Remediations ({patches.length})</span>
           </div>
@@ -1162,6 +1218,9 @@ export default function ReviewPage() {
         </div>
       )}
 
+      {/* Metrics Board & Audit History */}
+      <ScanMetricsHistoryBoard scanHistory={scanHistory} onSelectHistoryScan={handleSelectHistoryScan} />
+
       {/* Standby State */}
       {status === 'idle' && (
         <div className="empty-state card">
@@ -1172,6 +1231,96 @@ export default function ReviewPage() {
           </div>
         </div>
       )}
+    </main>
+  )
+}
+
+function ScanMetricsHistoryBoard({ scanHistory = [], onSelectHistoryScan }) {
+  const historyList = Array.isArray(scanHistory) ? scanHistory : []
+  const totalScans = historyList.length
+  const totalFindings = historyList.reduce((acc, item) => acc + (item.findingCount || (item.findings ? item.findings.length : 0)), 0)
+  const totalPatches = historyList.reduce((acc, item) => acc + (item.patchCount || (item.patches ? item.patches.length : 0)), 0)
+
+
+  return (
+    <div className="card mb-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--glass-border-hover)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--cyan-accent)', fontWeight: 700 }}>
+          <Activity size={18} />
+          <span>SCAN METRICS BOARD & AUDIT HISTORY</span>
+        </div>
+        <span className="badge badge-tag" style={{ color: 'var(--cyan-accent)', borderColor: 'var(--glass-border-hover)' }}>
+          {totalScans} Session Audit{totalScans !== 1 ? 's' : ''} Recorded
+        </span>
+      </div>
+
+      {/* Metrics Counters Grid */}
+      <div className="metric-grid" style={{ marginBottom: 16 }}>
+        <div className="metric-card">
+          <div className="metric-value" style={{ color: 'var(--text-primary)' }}>{totalScans}</div>
+          <div className="metric-label">Total Audits Run</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-value" style={{ color: 'var(--severity-critical)' }}>{totalFindings}</div>
+          <div className="metric-label">Vulnerabilities Detected</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-value" style={{ color: '#30d158' }}>{totalPatches}</div>
+          <div className="metric-label">Patches Synthesized</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-value" style={{ color: 'var(--amd-red)', fontSize: '1.2rem' }}>AMD W7900D</div>
+          <div className="metric-label">Hardware Acceleration</div>
+        </div>
+      </div>
+
+      {/* History Log Table */}
+      {historyList.length > 0 && (
+        <div className="data-table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Target Repository</th>
+                <th>PR</th>
+                <th>Findings</th>
+                <th>Patches</th>
+                <th>Timestamp</th>
+                <th style={{ textAlign: 'right' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historyList.map((item, idx) => (
+
+                <tr key={idx}>
+                  <td style={{ fontWeight: 600, color: 'var(--cyan-accent)' }}>{item.repo}</td>
+                  <td>#{item.pr}</td>
+                  <td style={{ color: item.findingCount > 0 ? 'var(--severity-critical)' : '#30d158' }}>{item.findingCount} CWEs</td>
+                  <td style={{ color: '#30d158' }}>{item.patchCount} Patches</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{item.timestamp}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button
+                      onClick={() => onSelectHistoryScan(item)}
+                      style={{
+                        background: 'rgba(0, 240, 255, 0.1)',
+                        border: '1px solid rgba(0, 240, 255, 0.3)',
+                        color: 'var(--cyan-accent)',
+                        borderRadius: '4px',
+                        padding: '4px 10px',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      Reload Audit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
+

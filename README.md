@@ -116,17 +116,22 @@ THEMIS provides 3 separate modes for testing and evaluation.
    - The workflow diagram updates step-by-step: Triage -> Security / Style -> Verifier -> Fix Generator.
    - Click **Approve 2 Generated Patches** to trigger live automated PR creation and view the generated GitHub PR link badge.
 
-### Mode B: Terminal User Interface (CLI / TUI)
+### Mode B: Terminal User Interface (Bubbletea-Style TUI)
 
-1. Run the interactive terminal demo:
+1. Launch the full-screen interactive TUI dashboard:
    ```bash
-   python -m backend.cli demo
+   python -m backend.cli
    ```
-   Renders a live terminal interface with animated scanning indicators, a findings table, and a patch diff viewer.
+   Renders a 4-pane terminal interface with real-time DAG status, scrolling telemetry log stream, findings grid, code diff viewer, and an interactive prompt (`themis > `). Minimum terminal dimension limit: **80x24**.
 
-2. Scan a custom public GitHub repository:
+2. Scan a public GitHub repository PR with SARIF 2.1.0 report export:
    ```bash
-   python -m backend.cli scan --repo octocat/Hello-World --pr 1
+   python -m backend.cli scan --repo expressjs/express --pr 4200 --export sarif
+   ```
+
+3. Audit a local source file on disk with JSON report export:
+   ```bash
+   python -m backend.cli audit --file backend/main.py --export json
    ```
 
 ### Mode C: AMD ROCm Performance Benchmark
@@ -141,6 +146,7 @@ THEMIS provides 3 separate modes for testing and evaluation.
    ```bash
    python tests/seeded_vulnerabilities.py
    ```
+
 
 ---
 

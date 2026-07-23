@@ -12,13 +12,21 @@ const headers = () => ({
   'X-API-Key': API_KEY,
 })
 
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return ''
+  return str.replace(/<[^>]*>?/gm, '').trim()
+}
+
 // ── Review Endpoints ──────────────────────────────────────────
 
 export async function submitGithubReview(repo, prNumber) {
+  const cleanRepo = sanitizeInput(repo)
+  const cleanPr = parseInt(prNumber, 10) || 1
+
   const res = await fetch(`${API_BASE}/api/review/github`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ repo, pr_number: parseInt(prNumber) }),
+    body: JSON.stringify({ repo: cleanRepo, pr_number: cleanPr }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
@@ -82,26 +90,48 @@ export async function getHealth() {
   return res.ok
 }
 
-// ── WebSocket Streaming ───────────────────────────────────────
+// ── WebSocket Streaming with Auto-Reconnect Retry Loop ─────────
 
 export function createReviewStream(jobId, onEvent, onDone, onError) {
   const wsUrl = `${WS_BASE}/api/review/${jobId}/stream`.replace(/^http/, 'ws')
-  const ws = new WebSocket(wsUrl)
+  let ws = null
+  let retryCount = 0
+  const maxRetries = 3
 
-  ws.onmessage = (msg) => {
+  const connect = () => {
     try {
-      const event = JSON.parse(msg.data)
-      if (event.type === 'complete') {
-        onDone(event)
-        ws.close()
-      } else {
-        onEvent(event)
+      ws = new WebSocket(wsUrl)
+
+      ws.onmessage = (msg) => {
+        try {
+          const event = JSON.parse(msg.data)
+          if (event.type === 'complete') {
+            onDone(event)
+            ws.close()
+          } else {
+            onEvent(event)
+          }
+        } catch {}
       }
-    } catch {}
+
+      ws.onerror = (err) => {
+        if (retryCount < maxRetries) {
+          retryCount++
+          setTimeout(connect, 1000 * retryCount)
+        } else if (onError) {
+          onError(err)
+        }
+      }
+    } catch (e) {
+      if (onError) onError(e)
+    }
   }
 
-  ws.onerror = onError
-  ws.onclose = () => {}
+  connect()
 
-  return () => ws.close() // Return cleanup fn
+  return () => {
+    if (ws) {
+      try { ws.close() } catch {}
+    }
+  }
 }

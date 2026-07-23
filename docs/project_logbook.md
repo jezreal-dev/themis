@@ -482,6 +482,31 @@ Three candidates were evaluated:
 ---
 
 ## ═══════════════════════════════════════
+## PHASE 5 — TRIBUNAL CONSOLE & BUBBLETEA TUI OVERHAUL
+## July 23, 2026
+## ═══════════════════════════════════════
+
+### [2026-07-23 18:30 BST] — DECISION — Console Route Rename to `/tribunal`
+- Renamed primary web application console route from `/review` to `/tribunal` (`http://localhost:3000/tribunal`).
+- Retained `/review` route alias for backward compatibility.
+
+### [2026-07-23 19:15 BST] — MILESTONE — 1-Click SARIF 2.1.0 & JSON Exporters
+- Added OASIS SARIF 2.1.0 standard and structured JSON report exporters on the Web GUI verdict banner.
+- Supported CLI flags `--export sarif` and `--export json` on terminal commands.
+
+### [2026-07-23 20:45 BST] — ARCHITECTURE CHANGE — Bubbletea-Style Interactive TUI Overhaul
+- Refactored `backend/cli.py` into a full-screen interactive TUI modeled after Go's Bubbletea framework.
+- Integrated a 4-pane terminal dashboard: 5-Agent DAG Node Stepper status, Live Telemetry Log Stream, Verified Findings Grid, and Syntax-Highlighted Git Diff Viewer.
+- Built an interactive shell REPL (`themis > `) allowing judges to scan public GitHub PRs (`scan owner/repo pr`), audit local disk files (`audit path/to/file`), or run 5-repo benchmark suites (`suite`).
+
+### [2026-07-23 21:10 BST] — FEATURE — Terminal Responsiveness & Minimum Dimensions Limit
+- Implemented `check_terminal_size()` enforcing a minimum terminal dimension limit of **80 columns width x 24 lines height** (`80x24`).
+- Added automatic resize warnings when terminal windows are minimized below the minimum limit.
+- Added a high-visibility `[QUERY REQUEST GUIDE]` panel directly inside the TUI interface.
+
+---
+
+## ═══════════════════════════════════════
 ## DECISION REGISTER
 ## ═══════════════════════════════════════
 
@@ -499,9 +524,12 @@ Three candidates were evaluated:
 | D-011 | Team name: **Alchemy** | No collision, thematically fits Themis mythology | 2026-07-20 14:07 | Developer |
 | D-012 | Extract `types.py` for shared schemas | Fix Python circular import in orchestrator | 2026-07-21 | Developer |
 | D-013 | SSH Tunneling for vLLM API Access | Bypass Radeon Cloud HTTP ingress restrictions | 2026-07-21 | Developer |
+| D-014 | Route rename to `/tribunal` | More descriptive security command title | 2026-07-23 | Developer |
+| D-015 | Bubbletea TUI with 80x24 min size limit | Premium terminal experience for hackathon judges | 2026-07-23 | Developer |
 
 ---
 
-*Logbook maintained by: AMD AI DevMaster Hackathon AI Specialist*
-*Next update due: End of Sprint 4 (July 22, 2026)*
+*Logbook maintained by: AMD AI DevMaster Hackathon AI Specialist*  
+*Last updated: July 23, 2026*
+
 
