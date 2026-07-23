@@ -1,9 +1,9 @@
 <div align="center">
 
-# ⚖️ THEMIS — Autonomous Code Review & Security Analysis Platform
+# THEMIS: Autonomous Code Review & Security Analysis Platform
 
-**Track 2 (Agentic AI) — AMD AI DevMaster Hackathon Submission**  
-**Team**: **Alchemy** | **Target Hardware**: **AMD Radeon PRO W7900D (48GB GDDR6 VRAM)**
+**Track 2 (Agentic AI), AMD AI DevMaster Hackathon Submission**  
+**Team**: **Alchemy** | **Hardware**: **AMD Radeon PRO W7900D (48GB GDDR6 VRAM)**
 
 [![AMD ROCm](https://img.shields.io/badge/AMD_ROCm-7.2.1-ED1C24?style=for-the-badge&logo=amd&logoColor=white)](https://www.amd.com/en/products/accelerators/instinct.html)
 [![vLLM](https://img.shields.io/badge/vLLM-0.16.1.dev0-4B0082?style=for-the-badge&logo=python&logoColor=white)](https://github.com/vllm-project/vllm)
@@ -14,196 +14,190 @@
 [![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Qdrant](https://img.shields.io/badge/Qdrant-Vector_RAG-DC2626?style=for-the-badge&logo=qdrant&logoColor=white)](https://qdrant.tech/)
 [![Semgrep](https://img.shields.io/badge/Semgrep-SAST_Rules-00D2FF?style=for-the-badge&logo=semgrep&logoColor=black)](https://semgrep.dev/)
-[![Rubric Alignment](https://img.shields.io/badge/Hackathon_Rubric-100%25_Verified-30D158?style=for-the-badge)](#-hackathon-rubric-alignment-matrix)
 
 </div>
 
----
+### Key Capabilities at a Glance
 
-## 📌 Executive Summary
-
-**THEMIS** is an enterprise-grade autonomous code review and security analysis platform powered by local open-weight LLMs (`Qwen2.5-Coder-32B-Instruct-AWQ`) running on **AMD Radeon PRO W7900D GPUs**. 
-
-Unlike traditional static linters, THEMIS deploys a **parallel multi-agent state graph (LangGraph)** that orchestrates automated AST diff parsing, vector-based OWASP RAG retrieval, confidence-scored vulnerability verification, unified git patch synthesis, and **1-click automated GitHub Pull Request creation**.
+* **Parallel Agent Pipeline**: Runs security scanning, OWASP vector checks, and code quality checks simultaneously using LangGraph.
+* **AMD Hardware Acceleration**: Powered by vLLM speculative decoding on an AMD Radeon PRO W7900D GPU, delivering 2.56x faster token generation.
+* **Automated Remediation**: Detects code vulnerabilities, verifies findings to filter false alarms, synthesizes code patches, and opens GitHub Pull Requests with 1 click.
 
 ---
 
-## 🏗️ System Architecture
+## Executive Summary
 
-THEMIS operates via a 5-stage parallel agent workflow:
+THEMIS is an automated code review platform built to audit pull requests for security vulnerabilities and code quality issues. It uses local open-weight language models (`Qwen2.5-Coder-32B-Instruct-AWQ`) running on **AMD Radeon PRO W7900D GPUs**.
+
+Standard code linters produce high numbers of false warnings and cannot fix broken code. THEMIS addresses this by running a team of specialized AI agents in parallel using **LangGraph**. The platform parses code changes, queries security databases for known attack patterns, verifies findings to eliminate false positives, and generates ready-to-merge GitHub Pull Requests containing code fixes.
+
+---
+
+## System Architecture
+
+THEMIS processes code reviews through a 5-step parallel agent pipeline:
 
 ```text
                      ┌────────────────────────┐
                      │ 1. Triage Agent        │
-                     │ (Diff Parser & Metadata│
+                     │ (Parses PR Diff)       │
                      └───────────┬────────────┘
                                  │
                  ┌───────────────┴───────────────┐
                  ▼                               ▼
      ┌───────────────────────┐       ┌───────────────────────┐
      │ 2a. Security Agent    │       │ 2b. Style Agent       │
-     │ - Semgrep / Bandit    │       │ - Complexity Check    │
-     │ - Qdrant Vector RAG   │       │ - PEP8 & Formatting   │
+     │ - Static Rule Scan    │       │ - Complexity Check    │
+     │ - Qdrant Vector RAG   │       │ - PEP8 & Format Check │
      └───────────┬───────────┘       └───────────┬───────────┘
                  │                               │
                  └───────────────┬───────────────┘
-                                 │  (Custom max_step reducer)
+                                 │  (Parallel State Reducer)
                                  ▼
                      ┌────────────────────────┐
                      │ 3. Verifier Agent      │
-                     │ (Confidence Bounds &   │
-                     │  CWE Validation)       │
+                     │ (Filters False Alarms  │
+                     │  & Validates CWEs)     │
                      └───────────┬────────────┘
                                  │
                                  ▼
                      ┌────────────────────────┐
                      │ 4. Fix Generator Agent │
-                     │ (Synthesizes Patches & │
+                     │ (Generates Patches &   │
                      │  Opens GitHub PR)      │
                      └───────────┬────────────┘
-                                 │
-                                 ▼
-                     ┌────────────────────────┐
-                     │ 1-Click Automated PR   │
-                     │ (POST /apply-fix)      │
-                     └────────────────────────┘
 ```
 
 ---
 
-## 📋 Prerequisites & Setup
+## Prerequisites and Setup
 
-Ensure the following tools are installed on your environment:
-- **Python 3.11+**
-- **Node.js 18+ & npm**
-- **Git**
+Before running THEMIS, ensure the following dependencies are installed on your system:
+* **Python 3.11+**
+* **Node.js 18+ and npm**
+* **Git**
 
-### 1. Environment Configuration
-Copy the sample environment file to enable local configurations:
+### Step 1: Environment File Setup
+Copy the sample environment file to configure default application settings:
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-### 2. Dependency Installation
+### Step 2: Install Dependencies
 ```bash
-# Backend dependencies
+# Install backend Python packages
 pip install -r backend/requirements.txt
 
-# Frontend dependencies
+# Install frontend Node modules
 cd frontend && npm install && cd ..
 ```
 
 ---
 
-## ⚡ 1-Click Quickstart Guide for Judges
+## Quickstart Guide
 
-THEMIS offers **3 independent execution interfaces** tailored for quick judge verification.
+THEMIS provides 3 separate modes for testing and evaluation.
 
-### Mode A: Interactive Web Security Tribunal (GUI)
+### Mode A: Web Application Interface (GUI)
 
-1. **Start Backend Server**:
+1. Start the backend API server:
    ```bash
    uvicorn backend.main:app --host 0.0.0.0 --port 8080
    ```
 
-2. **Start Frontend Dev Server**:
+2. In a second terminal, start the frontend development server:
    ```bash
    cd frontend
    npm run dev
    ```
 
-3. **Open Browser**:
-   Navigate to `http://localhost:3000/review` and click **`⚡ Run Interactive Vulnerability Demo`**.
-   - Watch live DAG step transitions: `Triage` → `Security` ∥ `Style` → `Verifier` → `Fix`.
-   - Click **`Approve 2 Generated Patches`** to trigger live endpoint `POST /api/review/{job_id}/apply-fix` and view the clickable GitHub PR badge (`🔗 VIEW OPEN PULL REQUEST (11)`).
+3. Open your browser to `http://localhost:3000/review` and click **Run Interactive Vulnerability Demo**.
+   - The workflow diagram updates step-by-step: Triage -> Security / Style -> Verifier -> Fix Generator.
+   - Click **Approve 2 Generated Patches** to trigger live automated PR creation and view the generated GitHub PR link badge.
 
----
+### Mode B: Terminal User Interface (CLI / TUI)
 
-### Mode B: Rich Terminal UI (CLI / TUI)
-
-1. **Run Interactive TUI Demo**:
+1. Run the interactive terminal demo:
    ```bash
    python -m backend.cli demo
    ```
-   Renders a live terminal interface with animated scanning indicators, CWE findings table, and synthesized git patch diff viewer.
+   Renders a live terminal interface with animated scanning indicators, a findings table, and a patch diff viewer.
 
-2. **Scan Live Custom GitHub Repository**:
+2. Scan a custom public GitHub repository:
    ```bash
    python -m backend.cli scan --repo octocat/Hello-World --pr 1
    ```
 
----
+### Mode C: AMD ROCm Performance Benchmark
 
-### Mode C: AMD ROCm Speculative Decoding Benchmark
-
-1. **Run Performance Metrics Suite**:
+1. Run the performance metrics suite:
    ```bash
    python benchmarks/rocm_benchmark.py
    ```
-   Outputs structured performance comparison tables comparing baseline AWQ INT4 vs. speculative decoding (`Qwen2.5-Coder-1.5B` draft model).
+   Displays performance tables comparing standard INT4 AWQ inference against speculative decoding with a 1.5B draft model.
 
-2. **Run 10/10 OWASP Seeded Vulnerabilities Test Suite**:
+2. Run the 10-case OWASP test suite:
    ```bash
    python tests/seeded_vulnerabilities.py
    ```
 
 ---
 
-## 🚀 AMD Radeon W7900D & Speculative Decoding Benchmarks
+## AMD Hardware Acceleration & Benchmarks
 
-THEMIS leverages **vLLM speculative decoding** on AMD ROCm 7.2.1 hardware stack to achieve real-time streaming reviews:
+THEMIS uses **vLLM speculative decoding** on the AMD ROCm 7.2.1 software stack for fast model inference:
 
-- **Target Hardware**: AMD Radeon PRO W7900D (48GB GDDR6 VRAM, 192 Compute Units)
-- **Main Engine Model**: `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ`
-- **Speculative Draft Model**: `Qwen/Qwen2.5-Coder-1.5B-Instruct` (`--num-speculative-tokens 5`)
+* **Target Hardware**: AMD Radeon PRO W7900D (48GB GDDR6 VRAM, 192 Compute Units)
+* **Main Model**: `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ`
+* **Speculative Draft Model**: `Qwen/Qwen2.5-Coder-1.5B-Instruct` (`--num-speculative-tokens 5`)
 
 | Metric | Standard AWQ INT4 | Speculative (1.5B Draft) | Performance Gain |
 |---|---|---|---|
-| **Avg Throughput (tok/s)** | `3.6 tok/s` | `9.2 tok/s` | **⚡ 2.56× Speedup** |
+| **Avg Throughput (tok/s)** | `3.6 tok/s` | `9.2 tok/s` | **2.56x Speedup** |
 | **Time to First Token (TTFT)** | `1298 ms` | `884 ms` | **31.8% Faster** |
-| **VRAM Footprint** | `37.2 GB / 48 GB` | `39.8 GB / 48 GB` | **Stable (0.80 Utilization)** |
+| **VRAM Footprint** | `37.2 GB / 48 GB` | `39.8 GB / 48 GB` | **Stable (80% Utilization)** |
 | **ROCm Backend Engine** | `ROCM_AITER_FA` | `ROCM_AITER_FA` | **Flash Attention 2** |
 
 ---
 
-## ⚠️ What to Avoid & Common Mistakes (Troubleshooting)
+## Troubleshooting and Common Issues
 
-| Common Issue | Cause | Corrective Solution |
+| Issue | Cause | Solution |
 |---|---|---|
-| `UnicodeEncodeError: 'charmap'` on Windows | Legacy Windows cmd stdout cannot encode emojis | Add `sys.stdout.reconfigure(encoding='utf-8')` early in Python scripts |
-| `vLLM: Speculative decoding rejection` | vLLM 0.16.1 V1 engine incompatible with draft model | Set environment variable `export VLLM_USE_V1=0` before launching server |
-| `InvalidUpdateError: At key 'step_count'` | Parallel LangGraph nodes returning unannotated state | Annotate key in `TypedDict` with custom reducer: `step_count: Annotated[int, max_step]` |
-| `GitHub API 403 Forbidden` | Expired or unprivileged Fine-grained PAT | Ensure `GITHUB_TOKEN` in `backend/.env` has `repo` write permissions |
+| `UnicodeEncodeError: 'charmap'` on Windows | Legacy Windows cmd stdout cannot encode emojis or unicode characters | Add `sys.stdout.reconfigure(encoding='utf-8')` early in Python entrypoints |
+| `vLLM: Speculative decoding rejection` | vLLM V1 engine mode is incompatible with draft model speculative decoding | Set `export VLLM_USE_V1=0` before launching the vLLM server |
+| `InvalidUpdateError: At key 'step_count'` | Parallel LangGraph nodes updating the same dictionary key without a reducer | Annotate state key with a custom reducer: `step_count: Annotated[int, max_step]` |
+| `GitHub API 403 Forbidden` | Expired or unprivileged Fine-grained Personal Access Token | Verify `GITHUB_TOKEN` in `backend/.env` has `repo` write permissions |
 
 ---
 
-## ❓ Frequently Asked Questions (FAQ)
+## Frequently Asked Questions (FAQ)
 
-#### Q1: Can THEMIS run offline without an active cloud GPU attached?
-> **Yes.** THEMIS includes an offline Standalone Demo Mode (`⚡ Run Interactive Vulnerability Demo`) that uses static rule heuristics and pre-compiled diff vectors to demonstrate the full multi-agent pipeline and 1-click PR creation.
+### Can THEMIS run offline without an active cloud GPU attached?
+Yes. THEMIS includes an offline Standalone Demo Mode (**Run Interactive Vulnerability Demo**) that uses static rule heuristics and pre-compiled diff vectors to demonstrate the full multi-agent pipeline and 1-click PR creation.
 
-#### Q2: How does THEMIS eliminate LLM false positives?
-> The **Verifier Agent** cross-references static analysis findings (Semgrep/Bandit) against Qdrant vector similarity embeddings and enforces strict confidence bounds (>0.85). Any unverified finding is automatically filtered out.
+### How does THEMIS eliminate false positive warnings?
+The **Verifier Agent** cross-references static analysis findings from Semgrep and Bandit against Qdrant vector similarity embeddings and enforces strict confidence bounds (threshold >0.85). Unverified findings are filtered out automatically.
 
-#### Q3: Does THEMIS modify original PR branches directly?
-> **No.** Following security best practices, THEMIS creates an isolated patch branch (e.g. `themis/patch-cwe-remediation`) and submits a separate Pull Request for human review before code is merged.
+### Does THEMIS modify original PR branches directly?
+No. Following security best practices, THEMIS creates an isolated patch branch (such as `themis/patch-cwe-remediation`) and submits a separate Pull Request for human review before code is merged.
 
-#### Q4: What programming languages are supported?
-> THEMIS provides native static analysis rules, RAG vector embeddings, and patch generators for **Python**, **JavaScript/TypeScript**, **Go**, **Java**, and **C/C++**.
+### What programming languages are supported?
+THEMIS provides native static analysis rules, RAG vector embeddings, and patch generators for **Python**, **JavaScript / TypeScript**, **Go**, **Java**, and **C / C++**.
 
 ---
 
-## 📋 Hackathon Rubric Alignment Matrix
+## Hackathon Rubric Alignment Matrix
 
-| Evaluation Category | Key Rubric Criteria | Verification & Technical Evidence |
+| Evaluation Category | Key Rubric Criteria | Verification and Technical Evidence |
 |---|---|---|
-| **1. Innovation & Agentic Architecture** | Parallel state execution & multi-agent coordination | LangGraph state graph with custom `max_step` reducer in [`backend/agents/types.py`](file:///C:/Users/USER/Desktop/DevMaster/themis/backend/agents/types.py) |
-| **2. Technical Implementation & AMD ROCm** | Hardware acceleration & throughput optimization | vLLM Speculative Decoding script (`vllm_speculative_deploy.sh`) + 2.56× speedup benchmark suite in [`benchmarks/rocm_benchmark.py`](file:///C:/Users/USER/Desktop/DevMaster/themis/benchmarks/rocm_benchmark.py) |
-| **3. Practical Utility & Security Impact** | End-to-end vulnerability remediation & workflow integration | Automated OWASP/CWE patch synthesis + 1-click GitHub PR creation endpoint (`POST /api/review/{job_id}/apply-fix`) |
-| **4. User Experience & Presentation** | Intuitive UI/UX, real-time feedback, and CLI/TUI accessibility | React dashboard with visual DAG stepper, telemetry console, Rich TUI (`python -m backend.cli demo`), and PR badges |
+| **1. Innovation and Agentic Architecture** | Parallel state execution and multi-agent coordination | LangGraph state graph with custom `max_step` reducer in [`backend/agents/types.py`](file:///C:/Users/USER/Desktop/DevMaster/themis/backend/agents/types.py) |
+| **2. Technical Implementation and AMD ROCm** | Hardware acceleration and throughput optimization | vLLM Speculative Decoding script (`vllm_speculative_deploy.sh`) and 2.56x speedup benchmark suite in [`benchmarks/rocm_benchmark.py`](file:///C:/Users/USER/Desktop/DevMaster/themis/benchmarks/rocm_benchmark.py) |
+| **3. Practical Utility and Security Impact** | End-to-end vulnerability remediation and workflow integration | Automated OWASP / CWE patch synthesis and 1-click GitHub PR creation endpoint (`POST /api/review/{job_id}/apply-fix`) |
+| **4. User Experience and Presentation** | Intuitive UI/UX, real-time feedback, and CLI / TUI accessibility | React dashboard with visual DAG stepper, telemetry console, Rich TUI (`python -m backend.cli demo`), and PR badges |
 
 ---
 
 <div align="center">
-  <b>Built with ❤️ by Team Alchemy for the AMD AI DevMaster Hackathon</b>
+  <b>Built by Team Alchemy for the AMD AI DevMaster Hackathon</b>
 </div>
